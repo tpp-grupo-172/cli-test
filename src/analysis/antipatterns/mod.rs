@@ -1,5 +1,6 @@
 mod long_function;
 mod long_params;
+mod duplicate_functions;
 
 use std::path::Path;
 use crate::analysis::analyze_project;
@@ -18,6 +19,7 @@ pub fn run(path: &Path) {
         let antipatterns: Vec<String> = [
             long_function::check(&file.data, &file_name),
             long_params::check(&file.data, &file_name),
+            duplicate_functions::check(&analyses),
         ]
         .into_iter()
         .flatten()
