@@ -3,9 +3,11 @@ pub mod circular;
 pub mod antipatterns;
 
 use std::path::{Path, PathBuf};
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tree_sitter_test::run_analysis;
 
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct FileAnalysis {
     pub path: PathBuf,
     pub data: Value,
