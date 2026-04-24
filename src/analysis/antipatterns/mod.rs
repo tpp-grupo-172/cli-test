@@ -1,11 +1,14 @@
 mod long_function;
 mod long_params;
 mod duplicate_functions;
+mod god_class;
 
 use std::path::Path;
+use crate::config;
 use crate::analysis::analyze_project;
 
 pub fn run(path: &Path) {
+    let cfg = config::load(path);
     let analyses = analyze_project(path);
     let mut found = false;
 
@@ -31,6 +34,11 @@ pub fn run(path: &Path) {
     }
 
     for v in duplicate_functions::check(&analyses) {
+        println!("{}", v);
+        found = true;
+    }
+
+    for v in god_class::check(&analyses) {
         println!("{}", v);
         found = true;
     }
