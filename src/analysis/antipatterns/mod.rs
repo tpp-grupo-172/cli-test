@@ -4,11 +4,10 @@ mod duplicate_functions;
 mod god_class;
 
 use std::path::Path;
-use crate::config;
+use crate::config::Config;
 use crate::analysis::analyze_project;
 
-pub fn run(path: &Path) {
-    let cfg = config::load(path);
+pub fn run(path: &Path, config: &Config) {
     let analyses = analyze_project(path);
     let mut found = false;
 
@@ -20,8 +19,8 @@ pub fn run(path: &Path) {
             .to_string();
 
         let antipatterns: Vec<String> = [
-            long_function::check(&file.data, &file_name),
-            long_params::check(&file.data, &file_name),
+            long_function::check(&file.data, &file_name, &config.long_function),
+            long_params::check(&file.data, &file_name, &config.long_params),
         ]
         .into_iter()
         .flatten()
@@ -33,12 +32,12 @@ pub fn run(path: &Path) {
         }
     }
 
-    for v in duplicate_functions::check(&analyses) {
+    for v in duplicate_functions::check(&analyses, &config.duplicate_functions) {
         println!("{}", v);
         found = true;
     }
 
-    for v in god_class::check(&analyses) {
+    for v in god_class::check(&analyses, &config.god_class) {
         println!("{}", v);
         found = true;
     }

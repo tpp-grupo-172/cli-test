@@ -1,13 +1,12 @@
 use serde_json::Value;
+use crate::config::LongParamsConfig;
 
-const MAX_PARAMS: usize = 5;
-
-pub fn check(data: &Value, file_name: &str) -> Vec<String> {
+pub fn check(data: &Value, file_name: &str, config: &LongParamsConfig) -> Vec<String> {
     let mut violations = vec![];
 
     if let Some(functions) = data.get("functions").and_then(|v| v.as_array()) {
         for func in functions {
-            if let Some(v) = check_one(func, file_name) {
+            if let Some(v) = check_one(func, file_name, config) {
                 violations.push(v);
             }
         }
@@ -17,7 +16,7 @@ pub fn check(data: &Value, file_name: &str) -> Vec<String> {
         for class in classes {
             if let Some(methods) = class.get("methods").and_then(|v| v.as_array()) {
                 for method in methods {
-                    if let Some(v) = check_one(method, file_name) {
+                    if let Some(v) = check_one(method, file_name, config) {
                         violations.push(v);
                     }
                 }
@@ -28,7 +27,7 @@ pub fn check(data: &Value, file_name: &str) -> Vec<String> {
     violations
 }
 
-fn check_one(func: &Value, file_name: &str) -> Option<String> {
+fn check_one(func: &Value, file_name: &str, config: &LongParamsConfig) -> Option<String> {
     let name = func.get("name").and_then(|v| v.as_str())?;
     let params = func.get("parameters").and_then(|v| v.as_array())?;
 
@@ -41,7 +40,7 @@ fn check_one(func: &Value, file_name: &str) -> Option<String> {
         })
         .count();
 
-    if count > MAX_PARAMS {
+    if count > config.max_params {
         Some(format!(
             "[LONG PARAMS]      {:<25} {:<30} ({} parameters)",
             name, file_name, count

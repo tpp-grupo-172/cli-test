@@ -1,19 +1,8 @@
 use std::collections::{HashMap, HashSet};
 use crate::analysis::FileAnalysis;
+use crate::config::DuplicateFunctionsConfig;
 
-const IGNORED_NAMES: &[&str] = &[
-    // Python magic methods
-    "__init__", "__str__", "__repr__", "__len__", "__eq__",
-    "__hash__", "__del__", "__enter__", "__exit__", "__iter__",
-    "__next__", "__call__",
-    // TypeScript/JavaScript
-    "constructor", "toString", "valueOf", "render",
-    // Generic
-    "run", "main", "execute", "start", "stop",
-    "init", "setup", "teardown",
-];
-
-pub fn check(analyses: &[FileAnalysis]) -> Vec<String> {
+pub fn check(analyses: &[FileAnalysis], config: &DuplicateFunctionsConfig) -> Vec<String> {
     let mut violations = vec![];
     let mut seen: HashMap<String, HashSet<String>> = HashMap::new();
 
@@ -27,7 +16,7 @@ pub fn check(analyses: &[FileAnalysis]) -> Vec<String> {
         if let Some(functions) = file.data.get("functions").and_then(|v| v.as_array()) {
             for func in functions {
                 if let Some(name) = func.get("name").and_then(|v| v.as_str()) {
-                    if !IGNORED_NAMES.contains(&name) {
+                    if !config.ignored_names.iter().any(|n| n == name) {
                         seen.entry(name.to_string()).or_default().insert(file_name.clone());
                     }
                 }
@@ -39,7 +28,7 @@ pub fn check(analyses: &[FileAnalysis]) -> Vec<String> {
                 if let Some(methods) = class.get("methods").and_then(|v| v.as_array()) {
                     for method in methods {
                         if let Some(name) = method.get("name").and_then(|v| v.as_str()) {
-                            if !IGNORED_NAMES.contains(&name) {       
+                            if !config.ignored_names.iter().any(|n| n == name) {       
                                 seen.entry(name.to_string()).or_default().insert(file_name.clone());
                             }
                         }

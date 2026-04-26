@@ -1,0 +1,19 @@
+[long_function]
+max_lines = 30
+
+[long_params]
+max_params = 5
+
+[god_class]
+flag_threshold = 0.5
+method_count_norm = 8.0
+distinct_imports_norm = 4.0
+total_lines_norm = 150.0
+weight_method_count = 0.50
+weight_distinct_imports = 0.15
+weight_total_lines = 0.30
+weight_name = 0.05
+god_names = ["manager", "coordinator", "handler", "controller", "processor", "helper", "utils", "utility", "service"]
+
+[duplicate_functions]
+ignored_names = ["__init__", "__str__", "__repr__", "__len__", "__eq__", "__hash__", "__del__", "__enter__", "__exit__", "__iter__", "__next__", "__call__", "constructor", "toString", "valueOf", "render", "run", "main", "execute", "start", "stop", "init", "setup", "teardown"]

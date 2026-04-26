@@ -1,6 +1,8 @@
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
+use config::Config;
 
+mod config;
 mod analysis;
 
 #[derive(Parser)]
@@ -9,6 +11,8 @@ mod analysis;
 struct Cli {
     #[command(subcommand)]
     command: Commands,
+    #[arg(long, global = true)]
+    config: Option<PathBuf>,
 }
 
 #[derive(Subcommand)]
@@ -26,10 +30,33 @@ enum Commands {
 
 fn main() {
     let cli = Cli::parse();
+    let config = match &cli.config {
+        Some(config_path) => match Config::load(config_path) {
+            Ok(c) => c,
+            Err(e) => {
+                eprintln!("Error loading config: {}", e);
+                std::process::exit(1);
+            }
+        },
+        None => {
+            let default_path = PathBuf::from("config.toml");
+            if default_path.exists() {
+                match Config::load(&default_path) {
+                    Ok(c) => c,
+                    Err(e) => {
+                        eprintln!("Error loading config.toml: {}", e);
+                        std::process::exit(1);
+                    }
+                }
+            } else {
+                Config::load_default()
+            }
+        }
+    };
 
     match cli.command {
         Commands::Unused { path } => analysis::unused::run(&path),
         Commands::Circular { path } => analysis::circular::run(&path),
-        Commands::Antipatterns { path } => analysis::antipatterns::run(&path),
+        Commands::Antipatterns { path } => analysis::antipatterns::run(&path, &config),
     }
 }

@@ -1,6 +1,7 @@
 use serde_json::Value;
 use std::collections::HashSet;
 use crate::analysis::FileAnalysis;
+use crate::config::GodClassConfig;
 
 pub struct GodClassResult {
     pub file_name: String,
@@ -11,23 +12,7 @@ pub struct GodClassResult {
     pub total_lines: usize,
 }
 
-const METHOD_COUNT_NORM: f32 = 8.0;
-const DISTINCT_IMPORTS_NORM: f32 = 4.0;
-const TOTAL_LINES_NORM: f32 = 150.0;
-const FLAG_THRESHOLD: f32 = 0.5;
-
-const GOD_NAMES: &[&str] = &[
-    "manager", "coordinator", "handler", "controller",
-    "processor", "helper", "utils", "utility", "service"
-];
-
-// weights must sum to 1.0
-const W_METHOD_COUNT: f32 = 0.50;
-const W_DISTINCT_IMPORTS: f32 = 0.15;
-const W_TOTAL_LINES: f32 = 0.30;
-const W_NAME: f32 = 0.05;
-
-pub fn check(analyses: &[FileAnalysis]) -> Vec<String> {
+pub fn check(analyses: &[FileAnalysis], config: &GodClassConfig) -> Vec<String> {
     let mut violations = vec![];
 
     for file in analyses {
@@ -39,7 +24,7 @@ pub fn check(analyses: &[FileAnalysis]) -> Vec<String> {
 
         if let Some(classes) = file.data.get("classes").and_then(|v| v.as_array()) {
             for class in classes {
-                if let Some(result) = check_one(class, &file_name) {
+                if let Some(result) = check_one(class, &file_name, config) {
                     violations.push(format!(
                         "[GOD CLASS]        {:<25} defined in: {:<30} (score: {:.2}, methods: {}, imports: {}, lines: {})",
                         result.class_name,
@@ -57,7 +42,7 @@ pub fn check(analyses: &[FileAnalysis]) -> Vec<String> {
     violations
 }
 
-fn check_one(class: &Value, file_name: &str) -> Option<GodClassResult> {
+fn check_one(class: &Value, file_name: &str, config: &GodClassConfig) -> Option<GodClassResult> {
     let class_name = class.get("name").and_then(|v| v.as_str())?.to_string();
     let methods = class.get("methods").and_then(|v| v.as_array())?;
 
@@ -70,9 +55,10 @@ fn check_one(class: &Value, file_name: &str) -> Option<GodClassResult> {
         distinct_imports,
         total_lines,
         &class_name,
+        config,
     );
 
-    if score >= FLAG_THRESHOLD {
+    if score >= config.flag_threshold {
         Some(GodClassResult {
             file_name: file_name.to_string(),
             class_name,
@@ -91,16 +77,17 @@ fn compute_score(
     distinct_imports: usize,
     total_lines: usize,
     class_name: &str,
+    config: &GodClassConfig,
 ) -> f32 {
-    let method_score = (method_count as f32 / METHOD_COUNT_NORM).min(1.0);
-    let imports_score = (distinct_imports as f32 / DISTINCT_IMPORTS_NORM).min(1.0);
-    let lines_score = (total_lines as f32 / TOTAL_LINES_NORM).min(1.0);
-    let name_score = if has_god_name(class_name) { 1.0 } else { 0.0 };
+    let method_score = (method_count as f32 / config.method_count_norm).min(1.0);
+    let imports_score = (distinct_imports as f32 / config.distinct_imports_norm).min(1.0);
+    let lines_score = (total_lines as f32 / config.total_lines_norm).min(1.0);
+    let name_score = if has_god_name(class_name, config) { 1.0 } else { 0.0 };
 
-    W_METHOD_COUNT * method_score
-        + W_DISTINCT_IMPORTS * imports_score
-        + W_TOTAL_LINES * lines_score
-        + W_NAME * name_score
+    config.weight_method_count * method_score
+        + config.weight_distinct_imports * imports_score
+        + config.weight_total_lines * lines_score
+        + config.weight_name * name_score
 }
 
 fn count_distinct_imports(methods: &[Value]) -> usize {
@@ -127,7 +114,7 @@ fn sum_method_lines(methods: &[Value]) -> usize {
     }).sum()
 }
 
-fn has_god_name(class_name: &str) -> bool {
+fn has_god_name(class_name: &str, config: &GodClassConfig) -> bool {
     let lower = class_name.to_lowercase();
-    GOD_NAMES.iter().any(|n| lower.contains(n))
+    config.god_names.iter().any(|n| lower.contains(n))
 }
