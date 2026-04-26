@@ -1,5 +1,4 @@
 pub mod unused;
-pub mod circular;
 pub mod antipatterns;
 
 use std::path::{Path, PathBuf};

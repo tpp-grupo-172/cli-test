@@ -20,10 +20,10 @@ enum Commands {
     Unused {
         path: PathBuf,
     },
-    Circular {
+    Antipatterns {
         path: PathBuf,
     },
-    Antipatterns {
+    All {
         path: PathBuf,
     },
 }
@@ -56,7 +56,10 @@ fn main() {
 
     match cli.command {
         Commands::Unused { path } => analysis::unused::run(&path),
-        Commands::Circular { path } => analysis::circular::run(&path),
         Commands::Antipatterns { path } => analysis::antipatterns::run(&path, &config),
+        Commands::All { path } => {
+            analysis::unused::run(&path);
+            analysis::antipatterns::run(&path, &config);
+        }
     }
 }
