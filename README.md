@@ -65,7 +65,7 @@ Se reporta si el score supera el umbral configurado.
 
  
 ```bash
-cargo run -- antipatterns ./mi-proyecto
+cargo run -- antipatterns my-project/
 ```
  
 **Ejemplo de salida:**
