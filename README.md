@@ -91,7 +91,7 @@ cargo run -- all my-project/
 El CLI busca automáticamente un archivo `Config.toml` en el directorio actual. Si no lo encuentra, usa valores por defecto. También se puede especificar un path explícito:
  
 ```bash
-cargo run -- --config New-config.toml antipatterns my--project/
+cargo run -- --config New-config.toml antipatterns my-project/
 ```
 
 ## Uso en CI/CD
